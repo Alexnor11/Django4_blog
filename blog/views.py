@@ -33,7 +33,13 @@ def post_detail(request, year, month, day, post):
                              publish__month=month,
                              publish__day=day)
 
-    return render(request, 'blog/post/detail.html', {'post' : post})
+    # Список активных комментариев к этому посту
+    comments = post.comments.filter(active=True)
+    # Форма для комментирования пользователями
+    form = CommentForm()
+
+    return render(request, 'blog/post/detail.html', {'post' : post,
+                                                     'comments': comments, 'form': form})
 
 class PostListView(ListView):
     """
@@ -66,10 +72,10 @@ def post_share(request, post_id):
 
 @require_POST
 def post_comment(request, post_id):
-    post = get_object_or_404(Post, id=Post.Status.PUBLISHED)
+    post = get_object_or_404(Post, id=post_id, status=Post.Status.PUBLISHED)
     comment = None
     # Комментарий был отправлен
-    form = CommentForm(data=require_POST)
+    form = CommentForm(data=request.POST)
     if form.is_valid():
         # Создать объект класса Comment, не сохраняя его в базе данных
         comment = form.save(commit=False)
